@@ -1,4 +1,4 @@
-import { bcrypt } from "bcryptjs";
+import bcrypt from "bcryptjs";
 import dbConnect from "@/backend/config/dbConnect";
 import User, { IUser } from "@/backend/models/user";
 import NextAuth from "next-auth";

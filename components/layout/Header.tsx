@@ -54,6 +54,11 @@ const Header = () => {
               </Link>
             </div>
           </div>
+          <Link
+            href="/login"
+            className="btn btn-danger px-4 text-white login-header-btn float-rigth">
+            Login
+          </Link>
         </div>
       </div>
     </nav>
