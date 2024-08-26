@@ -1,18 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import Room from "@/backend/models/room";
+import Room, { IRoom } from "../models/room";
 import ErrorHandler from "../utils/errorHandler";
 import { catchAsyncErrors } from "@/backend/middlewares/catchAsyncErrors";
+import APIFilters from "../utils/apiFilters";
 
 // Get all rooms => /api/rooms
-export const allRooms = async (req: NextRequest) => {
-  const resPerPage = 8;
-  const rooms = await Room.find();
+export const allRooms = catchAsyncErrors(async (req: NextRequest) => {
+  const resPerPage = 4;
+
+  const { searchParams } = new URL(req.url);
+  const queryStr: any = {};
+
+  searchParams.forEach((value, key) => {
+    queryStr[key] = value;
+  });
+
+  const roomsCount: number = await Room.countDocuments();
+
+  const apiFilters = new APIFilters(Room, queryStr).search().filter();
+
+  let rooms: IRoom[] = await apiFilters.query;
+  const filteredRoomsCount: number = rooms.length;
+  apiFilters.pagination(resPerPage);
+  rooms = await apiFilters.query.clone();
+
   return NextResponse.json({
     success: true,
-    rooms,
+    roomsCount,
+    filteredRoomsCount,
     resPerPage,
+    rooms,
   });
-};
+});
 
 // Create new room => /api/admin/rooms
 export const newRoom = catchAsyncErrors(async (req: NextRequest) => {
@@ -24,10 +43,6 @@ export const newRoom = catchAsyncErrors(async (req: NextRequest) => {
 // Get room details => /api/rooms/:id
 export const getRoomDetails = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
-    if (params.id.length !== 24) {
-      throw new ErrorHandler("Room ID must be 24 characters long", 400);
-    }
-
     const room = await Room.findById(params.id);
     if (!room) {
       throw new ErrorHandler("Room not found with this ID", 404);
